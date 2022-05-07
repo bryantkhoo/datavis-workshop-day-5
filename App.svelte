@@ -8,7 +8,7 @@
   d3.csv(
     "https://raw.githubusercontent.com/bryantkhoo/datavis-workshop-day-5/main/data/500_most_rated_books.csv"
   ).then((res) => {
-    data = res.slice(0, 100);
+    data = res.slice(0, 200);
   });
 
   const xAccessor = (d) => parseFloat(d["average_rating"]);
@@ -82,86 +82,94 @@
     .addAll(nodes);
 </script>
 
-<h1>100 of the most rated books on Goodreads</h1>
+<div class="page-container">
+  <h1>100 of the most rated books on Goodreads</h1>
 
-<figure>
-  <div class="wrapper" bind:clientWidth={width} bind:clientHeight={height}>
-    <svg {width} {height}>
-      <g transform="translate({margin.left}, {margin.top})">
-        {#each newNodes as d}
-          <circle
-            cx={d.x}
-            cy={d.y}
-            r={d.r}
-            fill={hoveredPoint === d
-              ? "skyblue"
-              : colorScale(authorAccessor(d))}
+  <figure class="wrapper">
+    <div class="wrapper" bind:clientWidth={width} bind:clientHeight={height}>
+      <svg {width} {height}>
+        <g transform="translate({margin.left}, {margin.top})">
+          {#each newNodes as d}
+            <circle
+              cx={d.x}
+              cy={d.y}
+              r={d.r}
+              fill={hoveredPoint === d
+                ? "skyblue"
+                : colorScale(authorAccessor(d))}
+            />
+          {/each}
+          <rect
+            width={boundsWidth}
+            height={boundsHeight}
+            fill="transparent"
+            on:mousemove={(e) => {
+              const pos = d3.pointer(e);
+              const x = pos[0];
+              const y = pos[1];
+              const closestPoint = quadtree.find(x, y);
+              if (!closestPoint) return;
+              const hoveredPointPosition = [closestPoint.x, closestPoint.y];
+              // don't highlight if too far away
+              // a^2 + b^2 = c^2
+              const distance = Math.sqrt(
+                (x - hoveredPointPosition[0]) ** 2 +
+                  (y - hoveredPointPosition[1]) ** 2
+              );
+              if (distance < 50) {
+                hoveredPoint = closestPoint;
+              } else {
+                hoveredPoint = null;
+              }
+            }}
           />
-        {/each}
-        <rect
-          width={boundsWidth}
-          height={boundsHeight}
-          fill="transparent"
-          on:mousemove={(e) => {
-            const pos = d3.pointer(e);
-            const x = pos[0];
-            const y = pos[1];
-            const closestPoint = quadtree.find(x, y);
-            if (!closestPoint) return;
-            const hoveredPointPosition = [closestPoint.x, closestPoint.y];
-            // don't highlight if too far away
-            // a^2 + b^2 = c^2
-            const distance = Math.sqrt(
-              (x - hoveredPointPosition[0]) ** 2 +
-                (y - hoveredPointPosition[1]) ** 2
-            );
-            if (distance < 50) {
-              hoveredPoint = closestPoint;
-            } else {
-              hoveredPoint = null;
-            }
-          }}
-        />
-      </g>
-      <g transform="translate({margin.left}, {boundsHeight + margin.top})">
-        <AxisHorizontal scale={xScale} count="5" />
-      </g>
-    </svg>
-    <div
-      class="label"
-      style="transform: translate({boundsWidth}px, {boundsHeight +
-        margin.top +
-        15}px)"
-    >
-      {xMetric}
-    </div>
-    {#if hoveredPoint}
-      <Tooltip
-        x={margin.left + hoveredPoint.x}
-        y={margin.top + hoveredPoint.y}
-        placement={[
-          hoveredPoint.x > boundsWidth - 50 ? -90 : -50,
-          hoveredPoint.y < 80 ? 0 : -100,
-        ]}
+        </g>
+        <g transform="translate({margin.left}, {boundsHeight + margin.top})">
+          <AxisHorizontal scale={xScale} count="5" />
+        </g>
+      </svg>
+      <div
+        class="label"
+        style="transform: translate({boundsWidth}px, {boundsHeight +
+          margin.top +
+          15}px)"
       >
-        <strong>
-          {hoveredPoint.title}
-        </strong>
-        <div>
-          {hoveredPoint.authors}
-        </div>
-        <div>
-          Rating: {hoveredPoint.average_rating}
-        </div>
-        <div>
-          Ratings given: {hoveredPoint.ratings_count}
-        </div>
-      </Tooltip>
-    {/if}
-  </div>
-</figure>
+        {xMetric}
+      </div>
+      {#if hoveredPoint}
+        <Tooltip
+          x={margin.left + hoveredPoint.x}
+          y={margin.top + hoveredPoint.y}
+          placement={[
+            hoveredPoint.x > boundsWidth - 50 ? -90 : -50,
+            hoveredPoint.y < 80 ? 0 : -100,
+          ]}
+        >
+          <strong>
+            {hoveredPoint.title}
+          </strong>
+          <div>
+            {hoveredPoint.authors}
+          </div>
+          <div>
+            Rating: {hoveredPoint.average_rating}
+          </div>
+          <div>
+            Ratings given: {hoveredPoint.ratings_count}
+          </div>
+        </Tooltip>
+      {/if}
+    </div>
+  </figure>
+</div>
 
 <style>
+  .page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
   .wrapper {
     position: relative;
     margin: 0;
