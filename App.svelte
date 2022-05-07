@@ -11,6 +11,7 @@
 	});
 
 	const xAccessor = d => parseFloat(d["average_rating"]);
+	const sizeAccessor = d => parseInt(d["ratings_count"]);
 
 	let xMetric = "Rating";
 
@@ -32,12 +33,17 @@
 	  .domain(d3.extent(data, xAccessor))
 	  .range([0, boundsWidth]);
 
+	$: sizeScale = d3
+	  .scaleLinear()
+	  .domain(d3.extent(data, sizeAccessor))
+	  .range([5, 50]);
+
 	$: nodes = data.map(d => {
 	  return {
 	    data: d,
 	    x: xScale(xAccessor(d)),
 	    y: boundsHeight / 2,
-	    r: 7
+	    r: sizeScale(sizeAccessor(d))
 	  };
 	});
 
@@ -60,7 +66,7 @@
           <circle
             cx={d.x}
 			cy={d.y}
-            r="6"
+            r={d.r}
             fill="#7897AB"
           />
         {/each}
@@ -75,7 +81,7 @@
     </svg>
     <div
       class="label"
-      style="transform: translate({boundsWidth}px, {boundsHeight + margin.top}px)">
+      style="transform: translate({boundsWidth}px, {boundsHeight + margin.top + 30}px)">
       {xMetric}
     </div>
   </div>
